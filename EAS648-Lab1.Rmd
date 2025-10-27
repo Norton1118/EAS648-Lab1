@@ -141,7 +141,7 @@ tm_shape(World) +
 
 ## Introduction
 
-This report demonstrates an open science workflow for geospatial analysis using Boulder Social Media data, combining transparency and reproducibility with visual storytelling.
+This report uses open science principles to analyze spatial patterns in Boulder’s Open Space and Mountain Parks (OSMP) through social media photo data. Utilizing R, R Markdown, and Git for version control, the analysis explores how landscape elevation and accessibility affect where people take and share photos. The workflow details each step, from data import to visualization and user behavior comparison across platforms. Results are showcased with a map and box plot, highlighting transparency and reproducibility in geospatial data.
 
 ## Data Preparation
 ```{r}
@@ -151,7 +151,7 @@ library(dplyr)
 library(viridis)
 ```
 
-# Load spatial data 
+## Load spatial data 
 ```{r}
 boulder <- st_read("G:/My Drive/000_25_Fall/EAS648/EAS648-Lab1/BolderSocialmedia/BoulderSocialMedia.shp")
 ```
@@ -195,5 +195,6 @@ These visual representations illustrate how both the physical geography and acce
 
 ## Version Control
 
-> ![Git history screenshot](git_commits_screenshot.png)
+![Git history screenshot](Screenshot 2025-10-27 132836.png)
+
   
