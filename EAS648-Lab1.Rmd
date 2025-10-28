@@ -141,60 +141,107 @@ tm_shape(World) +
 
 ## Introduction
 
-This report uses open science principles to analyze spatial patterns in Boulder’s Open Space and Mountain Parks (OSMP) through social media photo data. Utilizing R, R Markdown, and Git for version control, the analysis explores how landscape elevation and accessibility affect where people take and share photos. The workflow details each step, from data import to visualization and user behavior comparison across platforms. Results are showcased with a map and box plot, highlighting transparency and reproducibility in geospatial data.
+This analysis employs an open and reproducible R workflow to examine how life expectancy varies across countries in relation to GDP per capita using the `spData::world` dataset. I provide two visualizations: (1) an interactive choropleth map showing life expectancy for easy spatial comparison, and (2) a scatter plot that illustrates the relationship between life expectancy and GDP per capita on a logarithmic scale, highlighting overall trends and regional patterns.
 
-## Data Preparation
+The map features a perceptually uniform color ramp, clear titles, and a legend, with interactive zooming and pop-ups for country inspection. The scatter plot uses a logarithmic x-axis, continent colors for regional context, and a LOESS smoother to summarize trends. The map offers spatial context, while the chart illustrates the strength and nature of the relationship.
+
+
+## Data Preparation for Geovisualization
+
 ```{r}
 library(sf)
-library(ggplot2)
+library(spData) # world data
+library(leaflet)
+library(scales)
+
+world <- spData::world |> st_as_sf() |> st_transform(4326)
+```
+
+## Map Rendering & Styling (Life Expectancy)
+
+```{r}
+pal <- colorNumeric("viridis", domain = world$lifeExp, na.color = "#cccccc")
+
+leaflet(world, options = leafletOptions(minZoom = 1)) |>
+  addProviderTiles(providers$CartoDB.Positron) |>
+  addPolygons(
+    fillColor = ~pal(lifeExp), color = "#666", weight = 0.4,
+    fillOpacity = 0.9, smoothFactor = 0.2,
+    label = ~paste0(name_long, ": ", round(lifeExp, 1), " yrs"),
+    highlightOptions = highlightOptions(weight = 2, color = "#000", bringToFront = TRUE)
+  ) |>
+  addLegend(pal = pal, values = ~lifeExp, opacity = 0.9,
+            title = "Life expectancy (yrs)",
+            position = "bottomright") |>
+  fitBounds(lng1 = -170, lat1 = -55, lng2 = 170, lat2 = 75)
+
+```
+
+## Data Loading and Preparation (Life Expectancy & GDP)
+
+```{r}
+library(sf)
+library(spData)    
 library(dplyr)
+library(ggplot2)
 library(viridis)
+library(scales)
+
+# 1) Load data 
+world <- spData::world |> st_as_sf()
+
+# 2) Prepare a tidy frame for plotting (drop geometry & NAs; keep positive GDP)
+world_df <- world |>
+  st_drop_geometry() |>
+  filter(!is.na(lifeExp), !is.na(gdpPercap), gdpPercap > 0)
 ```
 
-## Load spatial data 
-```{r}
-boulder <- st_read("G:/My Drive/000_25_Fall/EAS648/EAS648-Lab1/BolderSocialmedia/BoulderSocialMedia.shp")
-```
+## Visualize Relationship by Continent
 
-## Project Data to Appropriate CRS
 ```{r}
-boulder <- st_transform(boulder, 26753)
-```
-
-## Spatial Distribution Map
-```{r}
-ggplot() +
-  geom_sf(data = boulder, aes(color = PT_Elev), alpha = 0.3) +
-  scale_color_viridis(option = "viridis", name = "Elevation (m)") +
+# 3) Chart: GDP per capita (log scale) vs Life expectancy
+p <- ggplot(world_df, aes(x = gdpPercap, y = lifeExp, color = continent)) +
+  geom_point(alpha = 0.85, size = 2) +
+  # smooth shows overall trend; grey so it doesn't fight the colors
+  geom_smooth(method = "loess", se = TRUE, color = "grey20", linewidth = 0.9) +
+  scale_x_log10(labels = label_dollar()) +
+  scale_color_viridis_d(option = "turbo", name = "Continent") +
   theme_bw() +
-  labs(title = "Social Media Photo Locations in Boulder OSMP",
-       caption = "Data: BoulderSocialMedia")
+  labs(
+    title = "Life Expectancy Rises with GDP per Capita",
+    subtitle = "Log scale on GDP per capita; LOESS smooth (grey) summarizes the relationship",
+    x = "GDP per capita (log scale)",
+    y = "Life expectancy (years)",
+    caption = "Source: spData::world (CRAN)"
+  )
 
-```
-## Boxplot: Road Distance by Social Media Source
-```{r}
-ggplot(
-  data = boulder %>% filter(DB %in% c("Pano", "Flickr")),
-  aes(x = DB, y = Street_dis, fill = DB)) +
-  geom_boxplot() +
-  theme_bw() +
-  labs(title = "Distance from Road by Photo Source",
-       x = "Source", y = "Distance to Nearest Road (m)")
+p
 
 ```
 
 ## Discussion
 
-The geospatial visualization reveals that social media photo locations in Boulder OSMP are concentrated in areas with greater elevations and varied terrain. The central and western parts of the park feature the most photographed sites, which are typically located near accessible trails and scenic overlooks. The elevation gradient displayed on the map underscores the popularity of higher landscapes, likely due to their aesthetic appeal and the higher levels of outdoor activity in those 
+The interactive map highlights the geography of longevity. Countries in Europe, North America, Oceania, and parts of East Asia have the highest life expectancies. In contrast, sub-Saharan Africa and some conflict-affected areas show much lower life expectancies. Latin America and North Africa fall in the upper-middle range, with significant variations within those regions, such as between the Southern Cone and the Andean states. Island nations and small economies can also be exceptions, indicating that national averages may hide internal disparities.
 
-The boxplot that compares submissions from Flickr and Panoramio reveals how the distance to roads differs between the two platforms. Both platforms show a broad range of distances from roads, but the median values indicate that users of Panoramio typically photograph locations that are farther away from roads compared to Flickr users. This might suggest that Panoramio contributors are more likely to explore remote or hard-to-reach areas, whereas Flickr users tend to capture images closer to roadways. However, both distributions have long upper tails, indicating that many photographs are taken in more secluded spots. This suggests that not all shared content is focused solely on well-known or easily accessible locations.
+The scatter plot links GDP per capita (on a logarithmic scale) to life expectancy, showing a strong non-linear relationship. Significant increases in life expectancy occur at low income levels, but the gains diminish beyond the upper-middle-income range. The LOESS curve levels off at high GDP, suggesting that once basic needs—like nutrition, sanitation, and education—are met, additional income provides smaller health benefits.
+
+Continental color coding reveals groupings (e.g., high GDP and life expectancy in Europe and parts of Asia, and lower figures in Africa). However, some countries outperform others at similar income levels due to better policies and institutions.
+
+Some countries have higher life expectancy than expected for their income, indicating strong public health systems or social protections. Others lag due to issues like conflict, epidemics, or poor governance. The log-scaled x-axis shows that increases in income have varying impacts on health; for example, going from $1k to $10k GDP yields a greater health benefit than increasing from $30k to $60k.
 
 ## Conclusion
 
-These visual representations illustrate how both the physical geography and accessibility for people affect the spatial and thematic trends in photo sharing on social media. The map shows that landscape elements like elevation draw considerable interest, while the boxplot reveals minor variations in user behavior among different platforms. By combining open data, replicable workflows, and effective geovisualization, this analysis underscores the significance of open science methods in examining public interaction with protected areas. The workflow is transparent and can be readily modified or expanded for additional research or review by peers.
+The results reveal a clear geography of longevity, with higher life expectancy in Europe, North America, Oceania, and parts of East Asia, while lower values are found in sub-Saharan Africa and conflict-affected areas. There is a strong, non-linear relationship between income and longevity, showing significant gains at lower income levels and diminishing returns at upper-middle-income levels.
+
+Income facilitates access to essential services like nutrition and healthcare, leading to substantial health improvements initially. However, as income rises, additional years of life depend more on the quality of health systems and preventive measures.
+
+Important considerations include the fact that national averages can mask within-country inequalities, GDP per capita does not reflect income distribution, and correlation does not imply causation. Future studies could add factors such as education and health spending to better understand health outcomes.
+
+Ultimately, the analysis highlights that investments in basic public health services in lower-income areas yield the largest gains in life expectancy, while higher-income contexts should focus on quality, prevention, and equity for further improvements.
 
 ## Version Control
 
-![Git history screenshot](Screenshot 2025-10-27 132836.png)
+![Git history screenshot](Screenshot 2025-10-27 133902.png)
+
 
   
