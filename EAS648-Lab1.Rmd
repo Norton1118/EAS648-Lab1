@@ -128,7 +128,6 @@ data("World")
 tm_shape(World) +
     tm_polygons("gdp_cap_est", style='quantile', legend.title = "GDP Per Capita Estimate")
 ```
-
 ```{r}
 ## the view mode creates an interactive map
 tmap_mode("view")
@@ -139,14 +138,26 @@ tm_shape(World) +
     tm_polygons("gdp_cap_est", style='quantile', legend.title = "GDP Per Capita Estimate")
 ```
 
-## Introduction
+# Question 1
+Discuss the advantages and challenges associated with an open data science approach. Provide an example based on this week’s reading. (1-2 paragraphs)
+
+An open data science approach enhances geographic insight by converting data-scarce areas into rich, interconnected datasets. This shift allows for dynamic, detailed analyses at larger scales and lower costs (Kitchin, 2013). Sharing data, code, and methods increases the visibility and public value of geography, as much of today’s "big data" includes spatial attributes that promote wider reuse (Kitchin, 2013).
+
+Open data science faces challenges such as uneven access, data quality, and coverage issues, particularly with volunteered sources like OpenStreetMap. There are also skills gaps for managing high-volume data and risks like naïve empiricism, which can overlook theory and small-data methods  (Kitchin, 2013). For instance, while volunteered data can enhance urban and social research, it still has limitations in access, quality, and scope, requiring careful interpretation based on theory (Kitchin, 2013).
+
+(Reference: Kitchin, R. (2013). Big data and human geography: Opportunities, challenges and risks. Dialogues in Human Geography, 3(3), 262–267.)
+
+# Question 2
+## The Geography of Longevity: Linking GDP per Capita to Life Expectancy
+
+### Introduction
 
 This analysis employs an open and reproducible R workflow to examine how life expectancy varies across countries in relation to GDP per capita using the `spData::world` dataset. I provide two visualizations: (1) an interactive choropleth map showing life expectancy for easy spatial comparison, and (2) a scatter plot that illustrates the relationship between life expectancy and GDP per capita on a logarithmic scale, highlighting overall trends and regional patterns.
 
 The map features a perceptually uniform color ramp, clear titles, and a legend, with interactive zooming and pop-ups for country inspection. The scatter plot uses a logarithmic x-axis, continent colors for regional context, and a LOESS smoother to summarize trends. The map offers spatial context, while the chart illustrates the strength and nature of the relationship.
 
 
-## Data Preparation for Geovisualization
+### Data Preparation for Geovisualization
 
 ```{r}
 library(sf)
@@ -157,7 +168,7 @@ library(scales)
 world <- spData::world |> st_as_sf() |> st_transform(4326)
 ```
 
-## Map Rendering & Styling (Life Expectancy)
+### Map Rendering & Styling (Life Expectancy)
 
 ```{r}
 pal <- colorNumeric("viridis", domain = world$lifeExp, na.color = "#cccccc")
@@ -177,7 +188,7 @@ leaflet(world, options = leafletOptions(minZoom = 1)) |>
 
 ```
 
-## Data Loading and Preparation (Life Expectancy & GDP)
+### Data Loading and Preparation (Life Expectancy & GDP)
 
 ```{r}
 library(sf)
@@ -196,7 +207,7 @@ world_df <- world |>
   filter(!is.na(lifeExp), !is.na(gdpPercap), gdpPercap > 0)
 ```
 
-## Visualize Relationship by Continent
+### Visualize Relationship by Continent
 
 ```{r}
 # 3) Chart: GDP per capita (log scale) vs Life expectancy
@@ -219,7 +230,7 @@ p
 
 ```
 
-## Discussion
+### Discussion
 
 The interactive map highlights the geography of longevity. Countries in Europe, North America, Oceania, and parts of East Asia have the highest life expectancies. In contrast, sub-Saharan Africa and some conflict-affected areas show much lower life expectancies. Latin America and North Africa fall in the upper-middle range, with significant variations within those regions, such as between the Southern Cone and the Andean states. Island nations and small economies can also be exceptions, indicating that national averages may hide internal disparities.
 
@@ -229,7 +240,7 @@ Continental color coding reveals groupings (e.g., high GDP and life expectancy i
 
 Some countries have higher life expectancy than expected for their income, indicating strong public health systems or social protections. Others lag due to issues like conflict, epidemics, or poor governance. The log-scaled x-axis shows that increases in income have varying impacts on health; for example, going from $1k to $10k GDP yields a greater health benefit than increasing from $30k to $60k.
 
-## Conclusion
+### Conclusion
 
 The results reveal a clear geography of longevity, with higher life expectancy in Europe, North America, Oceania, and parts of East Asia, while lower values are found in sub-Saharan Africa and conflict-affected areas. There is a strong, non-linear relationship between income and longevity, showing significant gains at lower income levels and diminishing returns at upper-middle-income levels.
 
@@ -239,9 +250,9 @@ Important considerations include the fact that national averages can mask within
 
 Ultimately, the analysis highlights that investments in basic public health services in lower-income areas yield the largest gains in life expectancy, while higher-income contexts should focus on quality, prevention, and equity for further improvements.
 
-## Version Control
+### Version Control
 
-![Git history screenshot](Screenshot 2025-10-27 133902.png)
+![Git history screenshot](Screenshot 2025-10-28 160140.png)
 
 
   
